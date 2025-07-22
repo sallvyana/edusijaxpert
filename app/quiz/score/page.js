@@ -4,6 +4,12 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import Image from 'next/image';
 import quizData from '../quizData';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://dyzokpqblmyzstvthnhu.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5em9rcHFibG15enN0dnRobmh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMDQ0NjgsImV4cCI6MjA2ODc4MDQ2OH0.0fy-9-C4qtwrbEt3OKzT7K1El51KI-z-bF11AUdxrCw';
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
 function ScoreContent() {
   const searchParams = useSearchParams();
@@ -30,94 +36,112 @@ function ScoreContent() {
   } catch {
     answers = [];
   }
-  // Gunakan state agar aman untuk SSR/SSG
+  // State untuk leaderboard, statistik pribadi, pertanyaan, input nama, error, loading
   const [leaderboard, setLeaderboard] = React.useState([]);
   const [myStat, setMyStat] = React.useState(null);
   const [questions, setQuestions] = React.useState([]);
+  const [namaInput, setNamaInput] = React.useState('');
+  const [errorNama, setErrorNama] = React.useState('');
+  const [loadingLeaderboard, setLoadingLeaderboard] = React.useState(false);
+  const [loadingSubmit, setLoadingSubmit] = React.useState(false);
+  const [modeBelajar, setModeBelajar] = React.useState(false);
 
+  // Ambil pertanyaan dari localStorage atau quizData
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        setLeaderboard(JSON.parse(localStorage.getItem('leaderboard') || '[]'));
-        setMyStat(JSON.parse(localStorage.getItem('myStat') || 'null'));
         const localQuestions = JSON.parse(localStorage.getItem('questions') || 'null');
         if (localQuestions && Array.isArray(localQuestions) && localQuestions.length > 0) {
           setQuestions(localQuestions);
         } else {
-          // Fallback: ambil dari quizData sesuai kategori
           setQuestions(quizData[kategori] || []);
         }
       } catch {
-        // Fallback: ambil dari quizData jika error parsing
         setQuestions(quizData[kategori] || []);
       }
     } else {
-      // SSR fallback
       setQuestions(quizData[kategori] || []);
     }
   }, [kategori]);
 
-  // State untuk input nama
-  const [namaInput, setNamaInput] = React.useState('');
-  const [errorNama, setErrorNama] = React.useState('');
+  // Ambil leaderboard dari Supabase
+  const fetchLeaderboard = async () => {
+    setLoadingLeaderboard(true);
+    const { data, error } = await supabase
+      .from('leaderboard')
+      .select('*')
+      .order('score', { ascending: false })
+      .order('waktu', { ascending: true })
+      .limit(20);
+    if (!error && Array.isArray(data)) {
+      setLeaderboard(data);
+    } else {
+      setLeaderboard([]);
+    }
+    setLoadingLeaderboard(false);
+  };
 
-  // Handler simpan nama
-  const handleNamaSubmit = (e) => {
+  React.useEffect(() => {
+    fetchLeaderboard();
+  }, [kategori]);
+
+  // Handler simpan nama ke Supabase
+  const handleNamaSubmit = async (e) => {
     e.preventDefault();
     if (!namaInput.trim()) {
       setErrorNama('Nama wajib diisi');
       return;
     }
-    // Simpan ke localStorage dan state
+    setLoadingSubmit(true);
     const newStat = {
       name: namaInput.trim(),
-      score: score,
-      waktu: waktu,
+      score: Number(score),
+      waktu: Number(waktu),
       progress: `${score}/${total}`,
-      date: Date.now(),
+      kategori,
+      created_at: new Date().toISOString(),
     };
-    localStorage.setItem('myStat', JSON.stringify(newStat));
-    // Update leaderboard
-    let currentLeaderboard = [];
-    try {
-      currentLeaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-    } catch {}
-    const newLeaderboard = [newStat, ...currentLeaderboard].sort((a, b) => b.score - a.score || a.waktu - b.waktu);
-    localStorage.setItem('leaderboard', JSON.stringify(newLeaderboard));
-    // Refresh state dari localStorage agar data selalu up-to-date
-    setMyStat(JSON.parse(localStorage.getItem('myStat') || 'null'));
-    setLeaderboard(JSON.parse(localStorage.getItem('leaderboard') || '[]'));
+    // Insert ke Supabase
+    const { data, error } = await supabase
+      .from('leaderboard')
+      .insert([newStat])
+      .select();
+    if (!error && data && data.length > 0) {
+      setMyStat(data[0]);
+      fetchLeaderboard();
+      setErrorNama('');
+    } else {
+      setErrorNama('Gagal simpan, coba lagi.');
+    }
+    setLoadingSubmit(false);
   };
 
-  // State mode belajar
-  const [modeBelajar, setModeBelajar] = React.useState(false);
-
   return (
-    <main style={styles.container}>
-      <div style={styles.scoreBox}>
-        <Image src={logoSrc} alt={kategori} width={60} height={60} style={styles.logo} />
-        <h1 style={styles.title}>Hasil Kuis</h1>
-        <p style={styles.kategori}>Kategori: <b>{kategori.toUpperCase()}</b></p>
-        <p style={styles.skor}>Skor Anda: <span style={styles.score}>{score} / {total}</span></p>
-        <p style={styles.skor}>Waktu: <span style={styles.score}>{waktu}s</span></p>
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-cyan-100 via-cyan-200 to-teal-100 text-teal-900 font-sans">
+      <div className="w-full max-w-xl mx-auto mt-10 mb-6 bg-white/70 rounded-xl shadow-lg p-6 text-center flex flex-col items-center">
+        <Image src={logoSrc} alt={kategori} width={60} height={60} className="mx-auto mb-4 drop-shadow" />
+        <h1 className="text-3xl font-bold text-teal-600 mb-2 drop-shadow">Hasil Kuis</h1>
+        <p className="text-lg text-gray-700 mb-1">Kategori: <b>{kategori.toUpperCase()}</b></p>
+        <p className="text-xl font-semibold mb-2">Skor Anda: <span className="text-cyan-600 font-bold drop-shadow">{score} / {total}</span></p>
+        <p className="text-xl font-semibold mb-4">Waktu: <span className="text-cyan-600 font-bold drop-shadow">{waktu}s</span></p>
         {!myStat ? (
-          <form onSubmit={handleNamaSubmit} style={styles.formNama}>
-            <label htmlFor="nama" style={styles.labelNama}>Masukkan Nama Anda:</label>
+          <form onSubmit={handleNamaSubmit} className="flex flex-col items-center gap-3 bg-cyan-50/80 rounded-lg p-4 shadow mt-2 w-full max-w-sm mx-auto">
+            <label htmlFor="nama" className="font-bold text-teal-700 text-base">Masukkan Nama Anda:</label>
             <input
               id="nama"
               type="text"
               value={namaInput}
               onChange={e => setNamaInput(e.target.value)}
-              style={styles.inputNama}
+              className="p-2 rounded-lg border border-cyan-400 text-base w-48 focus:outline-none focus:ring-2 focus:ring-cyan-300 bg-cyan-50 text-teal-900 shadow"
               placeholder="Nama..."
               autoFocus
             />
-            {errorNama && <div style={styles.errorNama}>{errorNama}</div>}
-            <button type="submit" style={styles.buttonNama}>Simpan</button>
+            {errorNama && <div className="text-red-600 text-sm">{errorNama}</div>}
+            <button type="submit" className="bg-gradient-to-r from-teal-500 to-cyan-400 text-white font-bold py-2 px-6 rounded-lg shadow hover:scale-105 transition">Simpan</button>
           </form>
         ) : (
-          <div style={styles.statPribadi}>
-            <b>Statistik Pribadi:</b>
+          <div className="bg-cyan-50/80 rounded-lg p-4 shadow mt-2 w-full max-w-sm mx-auto">
+            <b className="block mb-2">Statistik Pribadi:</b>
             <div>Nama: {myStat.name}</div>
             <div>Skor: {myStat.score}</div>
             <div>Waktu: {myStat.waktu}s</div>
@@ -125,51 +149,64 @@ function ScoreContent() {
             <div>Tanggal: {new Date(myStat.date).toLocaleString()}</div>
           </div>
         )}
-        <button style={styles.buttonBelajar} onClick={() => setModeBelajar(!modeBelajar)}>
+        <button className="bg-gradient-to-r from-cyan-400 to-teal-500 text-white font-bold py-2 px-6 rounded-lg shadow mt-4 hover:scale-105 transition" onClick={() => setModeBelajar(!modeBelajar)}>
           {modeBelajar ? 'Tutup Mode Belajar' : 'Mode Belajar (Kunci & Penjelasan)'}
         </button>
       </div>
-      <div style={styles.reviewBox}>
-        <h2>Review Jawaban</h2>
-        <ol style={styles.reviewList}>
+      <div className="w-full max-w-xl mx-auto mb-8 bg-white/70 rounded-xl shadow-lg p-6">
+        <h2 className="text-xl font-bold text-teal-600 mb-3">Review Jawaban</h2>
+        <ol className="text-left pl-4">
           {(questions && questions.length > 0 && answers && answers.length > 0) ? questions.map((q, i) => (
-            <li key={i} style={styles.reviewItem}>
-              <div><b>{q.question}</b></div>
-              <div>Jawaban Anda: <span style={answers[i] === q.answer ? styles.benar : styles.salah}>{q.options && q.options[answers[i]] ? q.options[answers[i]] : '-'}</span></div>
-              <div>Kunci Jawaban: <span style={styles.kunci}>{q.options && q.options[q.answer] ? q.options[q.answer] : '-'}</span></div>
+            <li key={i} className="mb-4 bg-cyan-100 rounded-lg p-3 shadow">
+              <div className="font-semibold mb-1">{q.question}</div>
+              <div>Jawaban Anda: <span className={answers[i] === q.answer ? "text-green-700 font-bold" : "text-red-600 font-bold"}>{q.options && q.options[answers[i]] ? q.options[answers[i]] : '-'}</span></div>
+              <div>Kunci Jawaban: <span className="text-cyan-700 font-bold">{q.options && q.options[q.answer] ? q.options[q.answer] : '-'}</span></div>
               {modeBelajar && q.explanation && (
-                <div style={styles.penjelasan}><b>Penjelasan:</b> {q.explanation}</div>
+                <div className="bg-cyan-50 text-teal-700 rounded-md p-2 mt-2 shadow"><b>Penjelasan:</b> {q.explanation}</div>
               )}
             </li>
-          )) : <li style={styles.reviewItem}>Belum ada data jawaban atau soal. Silakan mainkan kuis terlebih dahulu.</li>}
+          )) : <li className="mb-4 bg-cyan-100 rounded-lg p-3 shadow">Belum ada data jawaban atau soal. Silakan mainkan kuis terlebih dahulu.</li>}
         </ol>
       </div>
-      <div style={styles.leaderboardBox}>
-        <h2>Leaderboard</h2>
-        <table style={styles.leaderboardTable}>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Nama</th>
-              <th>Skor</th>
-              <th>Waktu</th>
-              <th>Tanggal</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leaderboard.slice(0, 10).map((l, i) => (
-              <tr key={i} style={myStat && l.name === myStat.name && l.date === myStat.date ? styles.highlight : {}}>
-                <td>{i + 1}</td>
-                <td>{l.name}</td>
-                <td>{l.score}</td>
-                <td>{l.waktu}s</td>
-                <td>{new Date(l.date).toLocaleString()}</td>
+      <div className="w-full max-w-xl mx-auto mb-8 bg-white/70 rounded-xl shadow-lg p-6 flex flex-col items-center">
+        <h2 className="mb-4 font-bold text-xl text-teal-600">🏆 Leaderboard</h2>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[400px] border-collapse bg-cyan-100 rounded-lg shadow">
+            <thead>
+              <tr>
+                <th className="w-14 text-center font-bold text-base">Rank</th>
+                <th>Nama</th>
+                <th>Skor</th>
+                <th>Waktu</th>
+                <th>Tanggal</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {leaderboard.slice(0, 10).map((l, i) => {
+                let rankIcon = '';
+                if (i === 0) rankIcon = '🥇';
+                else if (i === 1) rankIcon = '🥈';
+                else if (i === 2) rankIcon = '🥉';
+                let rowClass = '';
+                if (i === 0) rowClass = 'bg-yellow-100 text-yellow-700';
+                else if (i === 1) rowClass = 'bg-blue-100 text-blue-700';
+                else if (i === 2) rowClass = 'bg-orange-100 text-orange-700';
+                if (myStat && l.name === myStat.name && l.date === myStat.date) rowClass += ' border-l-4 border-cyan-400 font-bold';
+                return (
+                  <tr key={i} className={rowClass}>
+                    <td className="text-center font-bold">{rankIcon || i + 1}</td>
+                    <td className="font-bold">{l.name}</td>
+                    <td>{l.score}</td>
+                    <td>{l.waktu}s</td>
+                    <td>{new Date(l.date).toLocaleString()}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <button style={styles.button} onClick={() => router.push('/')}>Kembali ke Beranda</button>
+      <button className="bg-gradient-to-r from-teal-500 to-cyan-400 text-white font-bold py-3 px-8 rounded-xl shadow mt-4 hover:scale-105 transition" onClick={() => router.push('/')}>Kembali ke Beranda</button>
     </main>
   );
 }
@@ -182,182 +219,3 @@ export default function QuizScorePage() {
   );
 }
 
-const styles = {
-  buttonBelajar: {
-    background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)',
-    padding: '0.7rem 1.5rem',
-    borderRadius: '8px',
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: '1.1rem',
-    border: 'none',
-    cursor: 'pointer',
-    boxShadow: '0 0 10px #b2dfdb',
-    marginTop: '1rem',
-  },
-  penjelasan: {
-    background: '#e0f7fa',
-    color: '#185a9d',
-    borderRadius: '7px',
-    padding: '0.5rem',
-    marginTop: '0.5rem',
-    fontSize: '1rem',
-    boxShadow: '0 0 5px #b2dfdb',
-  },
-  container: {
-    background: 'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 40%, #b2dfdb 100%)',
-    color: '#174c43',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-    fontFamily: 'Segoe UI, Arial, sans-serif',
-  },
-  logo: {
-    width: '80px',
-    height: '80px',
-    marginBottom: '1.2rem',
-    filter: 'drop-shadow(0 0 10px #b2ebf2)',
-  },
-  title: {
-    fontSize: '2.2rem',
-    marginBottom: '1.2rem',
-    fontWeight: 'bold',
-    color: '#009688',
-    textShadow: '0 0 10px #b2ebf2',
-  },
-  kategori: {
-    fontSize: '1.3rem',
-    marginBottom: '0.8rem',
-    color: '#00796b',
-  },
-  skor: {
-    fontSize: '1.5rem',
-    marginBottom: '2rem',
-  },
-  score: {
-    color: '#00bcd4',
-    fontWeight: 'bold',
-    textShadow: '0 0 8px #b2ebf2',
-  },
-  statPribadi: {
-    background: 'rgba(224,247,250,0.7)',
-    borderRadius: '10px',
-    padding: '1rem',
-    marginTop: '1rem',
-    boxShadow: '0 0 10px #b2dfdb',
-  },
-  formNama: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.7rem',
-    background: 'rgba(224,247,250,0.7)',
-    borderRadius: '10px',
-    padding: '1rem',
-    marginTop: '1rem',
-    boxShadow: '0 0 10px #b2dfdb',
-  },
-  labelNama: {
-    fontWeight: 'bold',
-    color: '#00796b',
-    fontSize: '1.1rem',
-  },
-  inputNama: {
-    padding: '0.6rem 1rem',
-    borderRadius: '8px',
-    border: '1px solid #00bcd4',
-    fontSize: '1.1rem',
-    outline: 'none',
-    background: '#e0f7fa',
-    color: '#174c43',
-    width: '200px',
-    boxShadow: '0 0 5px #b2ebf2',
-  },
-  errorNama: {
-    color: '#d32f2f',
-    fontSize: '0.95rem',
-    marginTop: '-0.5rem',
-  },
-  buttonNama: {
-    background: 'linear-gradient(90deg, #009688 0%, #00bcd4 100%)',
-    padding: '0.7rem 1.5rem',
-    borderRadius: '8px',
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: '1.1rem',
-    border: 'none',
-    cursor: 'pointer',
-    boxShadow: '0 0 10px #b2dfdb',
-  },
-  reviewBox: {
-    background: 'rgba(224,247,250,0.7)',
-    borderRadius: '10px',
-    padding: '1rem',
-    margin: '1.5rem 0',
-    boxShadow: '0 0 10px #b2dfdb',
-    width: '100%',
-    maxWidth: '600px',
-  },
-  reviewList: {
-    textAlign: 'left',
-    paddingLeft: '1.2rem',
-  },
-  reviewItem: {
-    marginBottom: '1rem',
-    background: '#b2ebf2',
-    borderRadius: '7px',
-    padding: '0.7rem',
-    boxShadow: '0 0 5px #b2dfdb',
-  },
-  benar: {
-    color: '#388e3c',
-    fontWeight: 'bold',
-  },
-  salah: {
-    color: '#d32f2f',
-    fontWeight: 'bold',
-  },
-  kunci: {
-    color: '#009688',
-    fontWeight: 'bold',
-  },
-  leaderboardBox: {
-    background: 'rgba(224,247,250,0.7)',
-    borderRadius: '10px',
-    padding: '1rem',
-    margin: '1.5rem 0',
-    boxShadow: '0 0 10px #b2dfdb',
-    width: '100%',
-    maxWidth: '600px',
-  },
-  leaderboardTable: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    marginTop: '0.7rem',
-    background: '#b2ebf2',
-    borderRadius: '7px',
-    overflow: 'hidden',
-    boxShadow: '0 0 5px #b2dfdb',
-  },
-  highlight: {
-    background: '#e0f7fa',
-    fontWeight: 'bold',
-    color: '#00796b',
-  },
-  button: {
-    background: 'linear-gradient(90deg, #009688 0%, #00bcd4 100%)',
-    padding: '0.85rem 1.7rem',
-    borderRadius: '12px',
-    color: '#fff',
-    textDecoration: 'none',
-    fontSize: '1.1rem',
-    fontWeight: 'bold',
-    boxShadow: '0 0 20px #b2dfdb',
-    border: 'none',
-    cursor: 'pointer',
-    marginTop: '1.5rem',
-  },
-};
