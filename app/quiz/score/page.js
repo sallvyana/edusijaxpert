@@ -57,12 +57,17 @@ function ScoreContent() {
       progress: `${score}/${total}`,
       date: Date.now(),
     };
-    setMyStat(newStat);
     localStorage.setItem('myStat', JSON.stringify(newStat));
     // Update leaderboard
-    const newLeaderboard = [newStat, ...leaderboard].sort((a, b) => b.score - a.score || a.waktu - b.waktu);
-    setLeaderboard(newLeaderboard);
+    let currentLeaderboard = [];
+    try {
+      currentLeaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+    } catch {}
+    const newLeaderboard = [newStat, ...currentLeaderboard].sort((a, b) => b.score - a.score || a.waktu - b.waktu);
     localStorage.setItem('leaderboard', JSON.stringify(newLeaderboard));
+    // Refresh state dari localStorage agar data selalu up-to-date
+    setMyStat(JSON.parse(localStorage.getItem('myStat') || 'null'));
+    setLeaderboard(JSON.parse(localStorage.getItem('leaderboard') || '[]'));
   };
 
   // State mode belajar
