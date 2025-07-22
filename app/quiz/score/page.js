@@ -65,6 +65,9 @@ function ScoreContent() {
     localStorage.setItem('leaderboard', JSON.stringify(newLeaderboard));
   };
 
+  // State mode belajar
+  const [modeBelajar, setModeBelajar] = React.useState(false);
+
   return (
     <main style={styles.container}>
       <div style={styles.scoreBox}>
@@ -98,6 +101,9 @@ function ScoreContent() {
             <div>Tanggal: {new Date(myStat.date).toLocaleString()}</div>
           </div>
         )}
+        <button style={styles.buttonBelajar} onClick={() => setModeBelajar(!modeBelajar)}>
+          {modeBelajar ? 'Tutup Mode Belajar' : 'Mode Belajar (Kunci & Penjelasan)'}
+        </button>
       </div>
       <div style={styles.reviewBox}>
         <h2>Review Jawaban</h2>
@@ -107,6 +113,9 @@ function ScoreContent() {
               <div><b>{q.question}</b></div>
               <div>Jawaban Anda: <span style={answers[i] === q.answer ? styles.benar : styles.salah}>{q.options && q.options[answers[i]] ? q.options[answers[i]] : '-'}</span></div>
               <div>Kunci Jawaban: <span style={styles.kunci}>{q.options && q.options[q.answer] ? q.options[q.answer] : '-'}</span></div>
+              {modeBelajar && q.explanation && (
+                <div style={styles.penjelasan}><b>Penjelasan:</b> {q.explanation}</div>
+              )}
             </li>
           )) : <li style={styles.reviewItem}>Belum ada data jawaban.</li>}
         </ol>
@@ -150,6 +159,27 @@ export default function QuizScorePage() {
 }
 
 const styles = {
+  buttonBelajar: {
+    background: 'linear-gradient(90deg, #43cea2 0%, #185a9d 100%)',
+    padding: '0.7rem 1.5rem',
+    borderRadius: '8px',
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: '1.1rem',
+    border: 'none',
+    cursor: 'pointer',
+    boxShadow: '0 0 10px #b2dfdb',
+    marginTop: '1rem',
+  },
+  penjelasan: {
+    background: '#e0f7fa',
+    color: '#185a9d',
+    borderRadius: '7px',
+    padding: '0.5rem',
+    marginTop: '0.5rem',
+    fontSize: '1rem',
+    boxShadow: '0 0 5px #b2dfdb',
+  },
   container: {
     background: 'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 40%, #b2dfdb 100%)',
     color: '#174c43',

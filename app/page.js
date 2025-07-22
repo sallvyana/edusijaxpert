@@ -1,3 +1,4 @@
+import React from 'react';
 
 export default function Home() {
   return (
@@ -54,7 +55,7 @@ export default function Home() {
         </div>
       </div>
       <footer style={styles.footer}>
-        <div>Rekomendasi Fitur: <span style={styles.rekomendasi}>Leaderboard, Review Jawaban, Mode Belajar, Statistik Pribadi</span></div>
+        <div>&copy; {new Date().getFullYear()} EduSijaXpert</div>
       </footer>
     </main>
   );
@@ -62,14 +63,15 @@ export default function Home() {
 
 const styles = {
   container: {
-    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-    color: '#222',
+    background: 'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 40%, #b2dfdb 100%)',
+    color: '#174c43',
     minHeight: '100vh',
     padding: '0',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'flex-start',
+    fontFamily: 'Segoe UI, Arial, sans-serif',
   },
   heroBox: {
     width: '100%',
@@ -80,8 +82,9 @@ const styles = {
   title: {
     fontSize: '2.5rem',
     fontWeight: 'bold',
-    color: '#0055ff',
+    color: '#009688',
     marginBottom: '0.5rem',
+    textShadow: '0 0 10px #b2ebf2',
   },
   subtitle: {
     fontSize: '1.2rem',
@@ -95,13 +98,13 @@ const styles = {
     marginBottom: '2.5rem',
   },
   featureCard: {
-    background: '#fff',
+    background: '#e0f7fa',
     borderRadius: '16px',
-    boxShadow: '0 0 12px #e0e7ef',
+    boxShadow: '0 0 12px #b2dfdb',
     padding: '1.2rem 1rem',
     textAlign: 'center',
     fontSize: '1rem',
-    color: '#222',
+    color: '#174c43',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -121,8 +124,9 @@ const styles = {
   quizTitle: {
     fontSize: '1.5rem',
     fontWeight: 'bold',
-    color: '#0055ff',
+    color: '#009688',
     marginBottom: '1.2rem',
+    textShadow: '0 0 8px #b2ebf2',
   },
   categories: {
     display: 'grid',
@@ -132,12 +136,12 @@ const styles = {
     alignItems: 'center',
   },
   categoryCard: {
-    background: '#fff',
+    background: '#e0f7fa',
     borderRadius: '16px',
-    boxShadow: '0 0 12px #e0e7ef',
+    boxShadow: '0 0 12px #b2dfdb',
     padding: '1.2rem 1rem',
     textAlign: 'center',
-    color: '#222',
+    color: '#174c43',
     textDecoration: 'none',
     display: 'flex',
     flexDirection: 'column',
@@ -158,15 +162,10 @@ const styles = {
     width: '100%',
     textAlign: 'center',
     padding: '1.2rem 0',
-    background: '#f5f7fa',
-    color: '#0055ff',
+    background: '#e0f7fa',
+    color: '#009688',
     fontSize: '1rem',
     marginTop: '2rem',
-    boxShadow: '0 -2px 8px #e0e7ef',
-  },
-  rekomendasi: {
-    color: '#222',
-    fontWeight: 'bold',
-    marginLeft: '0.5rem',
+    boxShadow: '0 -2px 8px #b2dfdb',
   },
 };
