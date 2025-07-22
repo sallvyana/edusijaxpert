@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import Image from 'next/image';
+import quizData from '../quizData';
 
 function ScoreContent() {
   const searchParams = useSearchParams();
@@ -33,10 +34,22 @@ function ScoreContent() {
       try {
         setLeaderboard(JSON.parse(localStorage.getItem('leaderboard') || '[]'));
         setMyStat(JSON.parse(localStorage.getItem('myStat') || 'null'));
-        setQuestions(JSON.parse(localStorage.getItem('questions') || '[]'));
-      } catch {}
+        const localQuestions = JSON.parse(localStorage.getItem('questions') || 'null');
+        if (localQuestions && Array.isArray(localQuestions) && localQuestions.length > 0) {
+          setQuestions(localQuestions);
+        } else {
+          // Fallback: ambil dari quizData sesuai kategori
+          setQuestions(quizData[kategori] || []);
+        }
+      } catch {
+        // Fallback: ambil dari quizData jika error parsing
+        setQuestions(quizData[kategori] || []);
+      }
+    } else {
+      // SSR fallback
+      setQuestions(quizData[kategori] || []);
     }
-  }, []);
+  }, [kategori]);
 
   // State untuk input nama
   const [namaInput, setNamaInput] = React.useState('');
@@ -113,7 +126,7 @@ function ScoreContent() {
       <div style={styles.reviewBox}>
         <h2>Review Jawaban</h2>
         <ol style={styles.reviewList}>
-          {(questions && questions.length > 0) ? questions.map((q, i) => (
+          {(questions && questions.length > 0 && answers && answers.length > 0) ? questions.map((q, i) => (
             <li key={i} style={styles.reviewItem}>
               <div><b>{q.question}</b></div>
               <div>Jawaban Anda: <span style={answers[i] === q.answer ? styles.benar : styles.salah}>{q.options && q.options[answers[i]] ? q.options[answers[i]] : '-'}</span></div>
@@ -122,7 +135,7 @@ function ScoreContent() {
                 <div style={styles.penjelasan}><b>Penjelasan:</b> {q.explanation}</div>
               )}
             </li>
-          )) : <li style={styles.reviewItem}>Belum ada data jawaban.</li>}
+          )) : <li style={styles.reviewItem}>Belum ada data jawaban atau soal. Silakan mainkan kuis terlebih dahulu.</li>}
         </ol>
       </div>
       <div style={styles.leaderboardBox}>
@@ -157,7 +170,7 @@ function ScoreContent() {
 
 export default function QuizScorePage() {
   return (
-    <Suspense>
+    <Suspense fallback={<div>Memuat...</div>} suppressHydrationWarning>
       <ScoreContent />
     </Suspense>
   );
