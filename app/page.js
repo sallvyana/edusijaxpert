@@ -2,77 +2,171 @@
 export default function Home() {
   return (
     <main style={styles.container}>
-      <h1 style={styles.title}>Selamat Datang di Kuis EduSijaXpert</h1>
-      <p style={styles.subtitle}>Uji pemahamanmu tentang dunia teknologi & SIJA!</p>
-      <div style={styles.categories}>
-        <a href="/quiz?kategori=iot" style={styles.categoryButton}>IoT</a>
-        <a href="/quiz?kategori=paas" style={styles.categoryButton}>PaaS</a>
-        <a href="/quiz?kategori=saas" style={styles.categoryButton}>SaaS</a>
-        <a href="/quiz?kategori=iaas" style={styles.categoryButton}>IaaS</a>
+      <div style={styles.heroBox}>
+        <h1 style={styles.title}>Kuis EduSijaXpert</h1>
+        <p style={styles.subtitle}>Uji kemampuanmu dengan soal SIJA, IoT, Cloud, dan Teknologi Digital!</p>
+        <div style={styles.featureRow}>
+          <div style={styles.featureCard}>
+            <span style={styles.featureIcon}>📚</span>
+            <b>Materi Komprehensif</b>
+            <div>Pertanyaan SIJA, IoT, Cloud, dan Teknologi</div>
+          </div>
+          <div style={styles.featureCard}>
+            <span style={styles.featureIcon}>⏰</span>
+            <b>Tanpa Batas Waktu</b>
+            <div>Kerjakan dengan santai, fokus pemahaman</div>
+          </div>
+          <div style={styles.featureCard}>
+            <span style={styles.featureIcon}>⚡</span>
+            <b>Feedback Instan</b>
+            <div>Langsung tahu benar/salah setiap jawaban</div>
+          </div>
+          <div style={styles.featureCard}>
+            <span style={styles.featureIcon}>🚀</span>
+            <b>Tingkatkan Skill</b>
+            <div>Asah kemampuan SIJA & teknologi digital</div>
+          </div>
+        </div>
       </div>
-      <div style={styles.glow}></div>
+      <div style={styles.quizSection}>
+        <h2 style={styles.quizTitle}>Kategori Quiz</h2>
+        <div style={styles.categories}>
+          <a href="/quiz?kategori=iot" style={styles.categoryCard}>
+            <img src="/file.svg" alt="IoT" style={styles.categoryLogo} />
+            <div><b>IoT</b></div>
+            <div style={styles.categoryDesc}>Internet of Things</div>
+          </a>
+          <a href="/quiz?kategori=paas" style={styles.categoryCard}>
+            <img src="/globe.svg" alt="PaaS" style={styles.categoryLogo} />
+            <div><b>PaaS</b></div>
+            <div style={styles.categoryDesc}>Platform as a Service</div>
+          </a>
+          <a href="/quiz?kategori=saas" style={styles.categoryCard}>
+            <img src="/next.svg" alt="SaaS" style={styles.categoryLogo} />
+            <div><b>SaaS</b></div>
+            <div style={styles.categoryDesc}>Software as a Service</div>
+          </a>
+          <a href="/quiz?kategori=iaas" style={styles.categoryCard}>
+            <img src="/window.svg" alt="IaaS" style={styles.categoryLogo} />
+            <div><b>IaaS</b></div>
+            <div style={styles.categoryDesc}>Infrastructure as a Service</div>
+          </a>
+        </div>
+      </div>
+      <footer style={styles.footer}>
+        <div>Rekomendasi Fitur: <span style={styles.rekomendasi}>Leaderboard, Review Jawaban, Mode Belajar, Statistik Pribadi</span></div>
+      </footer>
     </main>
   );
 }
 
 const styles = {
   container: {
-    position: 'relative',
-    background: 'linear-gradient(135deg, #0a1a2f 0%, #003366 100%)',
-    color: '#00cfff',
-    height: '100vh',
+    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+    color: '#222',
+    minHeight: '100vh',
+    padding: '0',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
-    boxShadow: '0 0 40px 10px #00cfff55',
+    justifyContent: 'flex-start',
   },
-  glow: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    width: '600px',
-    height: '600px',
-    background: 'radial-gradient(circle, #00cfff55 0%, transparent 70%)',
-    transform: 'translate(-50%, -50%)',
-    zIndex: 0,
-    pointerEvents: 'none',
+  heroBox: {
+    width: '100%',
+    maxWidth: '700px',
+    margin: '2.5rem auto 1.5rem auto',
+    textAlign: 'center',
   },
   title: {
-    fontSize: '2.8rem',
-    marginBottom: '1rem',
+    fontSize: '2.5rem',
     fontWeight: 'bold',
-    textShadow: '0 0 10px #00cfff, 0 0 20px #003366',
-    zIndex: 1,
+    color: '#0055ff',
+    marginBottom: '0.5rem',
   },
   subtitle: {
-    fontSize: '1.3rem',
+    fontSize: '1.2rem',
+    color: '#444',
     marginBottom: '2rem',
-    color: '#b3e6ff',
-    textShadow: '0 0 6px #003366',
-    zIndex: 1,
+  },
+  featureRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '1.2rem',
+    marginBottom: '2.5rem',
+  },
+  featureCard: {
+    background: '#fff',
+    borderRadius: '16px',
+    boxShadow: '0 0 12px #e0e7ef',
+    padding: '1.2rem 1rem',
+    textAlign: 'center',
+    fontSize: '1rem',
+    color: '#222',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.3rem',
+  },
+  featureIcon: {
+    fontSize: '1.7rem',
+    marginBottom: '0.2rem',
+  },
+  quizSection: {
+    width: '100%',
+    maxWidth: '700px',
+    margin: '0 auto',
+    marginBottom: '2.5rem',
+    textAlign: 'center',
+  },
+  quizTitle: {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    color: '#0055ff',
+    marginBottom: '1.2rem',
   },
   categories: {
-    display: 'flex',
-    gap: '2rem',
-    marginBottom: '2.5rem',
-    zIndex: 1,
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '1.2rem',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  categoryButton: {
-    background: 'linear-gradient(90deg, #0055ff 0%, #00cfff 100%)',
-    padding: '1rem 2.2rem',
+  categoryCard: {
+    background: '#fff',
     borderRadius: '16px',
-    color: '#fff',
-    textDecoration: 'none',
-    fontSize: '1.3rem',
-    fontWeight: 'bold',
-    boxShadow: '0 0 30px #00cfff99',
-    border: 'none',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    zIndex: 1,
-    cursor: 'pointer',
+    boxShadow: '0 0 12px #e0e7ef',
+    padding: '1.2rem 1rem',
     textAlign: 'center',
-    letterSpacing: '1px',
+    color: '#222',
+    textDecoration: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.3rem',
+    transition: 'box-shadow 0.2s',
+  },
+  categoryLogo: {
+    width: '40px',
+    height: '40px',
+    marginBottom: '0.5rem',
+  },
+  categoryDesc: {
+    fontSize: '0.95rem',
+    color: '#888',
+  },
+  footer: {
+    width: '100%',
+    textAlign: 'center',
+    padding: '1.2rem 0',
+    background: '#f5f7fa',
+    color: '#0055ff',
+    fontSize: '1rem',
+    marginTop: '2rem',
+    boxShadow: '0 -2px 8px #e0e7ef',
+  },
+  rekomendasi: {
+    color: '#222',
+    fontWeight: 'bold',
+    marginLeft: '0.5rem',
   },
 };
