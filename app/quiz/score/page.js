@@ -23,7 +23,13 @@ function ScoreContent() {
 
   // Ambil waktu, answers, leaderboard, myStat, questions
   const waktu = parseInt(searchParams.get('waktu') || '0');
-  const answers = JSON.parse(searchParams.get('answers') || '[]');
+  let answers = [];
+  try {
+    answers = JSON.parse(searchParams.get('answers') || '[]');
+    if (!Array.isArray(answers)) answers = [];
+  } catch {
+    answers = [];
+  }
   // Gunakan state agar aman untuk SSR/SSG
   const [leaderboard, setLeaderboard] = React.useState([]);
   const [myStat, setMyStat] = React.useState(null);

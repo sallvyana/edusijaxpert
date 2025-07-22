@@ -68,7 +68,7 @@ function QuizContent() {
 
   const handleGoToScore = () => {
     // Simpan data leaderboard ke localStorage
-    const player = prompt('Masukkan nama Anda untuk leaderboard:') || 'Anonim';
+    // Navigasi ke halaman skor, input nama dilakukan di score/page.js
     const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
     leaderboard.push({
       name: player,
