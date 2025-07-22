@@ -1,6 +1,6 @@
 
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { quizData } from './quizData';
 import { Suspense } from 'react';
@@ -25,18 +25,31 @@ function QuizContent() {
   const [score, setScore] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [flagged, setFlagged] = useState([]); // array of flagged question indices
-  const [startTime] = useState(Date.now());
   const [streak, setStreak] = useState(0);
+  const [answers, setAnswers] = useState([]); // array of user answers
+  const [timer, setTimer] = useState(0);
+
+  // Timer berjalan terus
+  useEffect(() => {
+    if (!showModal) {
+      const interval = setInterval(() => setTimer((t) => t + 1), 1000);
+      return () => clearInterval(interval);
+    }
+  }, [showModal]);
 
   const current = questions[index];
   const progress = Math.round(((index + 1) / questions.length) * 100);
-  const elapsed = Math.floor((Date.now() - startTime) / 1000);
-  const speed = elapsed > 0 ? `${Math.round(elapsed / (index + 1))}s/soal` : '-';
+  const speed = timer > 0 ? `${Math.round(timer / (index + 1))}s/soal` : '-';
 
   const handleAnswer = async (answerIdx) => {
     const res = await fetch(`/api/cekjawaban?jawaban=${encodeURIComponent(answerIdx)}&benar=${encodeURIComponent(questions[index].answer)}`);
     const data = await res.text();
     setFeedback(data);
+    setAnswers((prev) => {
+      const copy = [...prev];
+      copy[index] = answerIdx;
+      return copy;
+    });
     if (answerIdx === questions[index].answer) {
       setScore((prev) => prev + 1);
       setStreak((prev) => prev + 1);
@@ -54,7 +67,20 @@ function QuizContent() {
   };
 
   const handleGoToScore = () => {
-    router.push(`/quiz/score?kategori=${kategori}&score=${score}&total=${questions.length}`);
+    // Simpan data leaderboard ke localStorage
+    const player = prompt('Masukkan nama Anda untuk leaderboard:') || 'Anonim';
+    const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+    leaderboard.push({
+      name: player,
+      score,
+      kategori,
+      waktu: timer,
+      progress: `${score}/${questions.length}`,
+      date: new Date().toISOString(),
+    });
+    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    // Kirim data ke halaman score
+    router.push(`/quiz/score?kategori=${kategori}&score=${score}&total=${questions.length}&waktu=${timer}&answers=${encodeURIComponent(JSON.stringify(answers))}`);
   };
 
   const handleFlag = () => {
@@ -77,7 +103,8 @@ function QuizContent() {
             <h2>Skor Akhir</h2>
             <p>Kategori: <b>{kategori.toUpperCase()}</b></p>
             <p>Skor Anda: <b>{score} / {questions.length}</b></p>
-            <button style={styles.button} onClick={handleGoToScore}>Lihat Detail Skor</button>
+            <p>Waktu: <b>{timer}s</b></p>
+            <button style={styles.button} onClick={handleGoToScore}>Lihat Detail Skor & Leaderboard</button>
           </div>
         </div>
       )}
@@ -95,13 +122,13 @@ function QuizContent() {
               <span style={styles.progressPercent}>{progress}% selesai</span>
             </div>
             <div style={styles.timeWrap}>
-              <span>⏱️ {elapsed}s</span>
+              <span>⏱️ {timer}s</span>
             </div>
           </div>
           <div style={styles.statLive}>
             <b>Statistik Live</b>
             <div>Progress: {index}/{questions.length} ({progress}%)</div>
-            <div>Waktu: {elapsed}s</div>
+            <div>Waktu: {timer}s</div>
             <div>Streak: {streak} berturut-turut</div>
             <div>Kecepatan: {speed}</div>
             <div>Flagged: {flagged.length}</div>
@@ -136,7 +163,7 @@ export default function QuizPage() {
 
 const styles = {
   container: {
-    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+    background: 'linear-gradient(135deg, #e0f7fa 0%, #d1fae5 100%)',
     color: '#222',
     minHeight: '100vh',
     padding: '2rem',
@@ -147,7 +174,7 @@ const styles = {
   quizBox: {
     background: '#fff',
     borderRadius: '18px',
-    boxShadow: '0 0 24px #c3cfe2',
+    boxShadow: '0 0 24px #b2f5ea',
     padding: '2.5rem 2rem',
     minWidth: '380px',
     maxWidth: '480px',
@@ -172,7 +199,7 @@ const styles = {
   },
   logo: {
     borderRadius: '50%',
-    background: '#f5f7fa',
+    background: '#e0f7fa',
   },
   progressWrap: {
     flex: 1,
@@ -183,36 +210,36 @@ const styles = {
   },
   progressText: {
     fontSize: '1rem',
-    color: '#0055ff',
+    color: '#059669',
     fontWeight: 'bold',
   },
   progressBarBg: {
     width: '100%',
     height: '8px',
-    background: '#e0e7ef',
+    background: '#b2f5ea',
     borderRadius: '8px',
     margin: '0.2rem 0',
     overflow: 'hidden',
   },
   progressBar: {
     height: '8px',
-    background: 'linear-gradient(90deg, #0055ff 0%, #00cfff 100%)',
+    background: 'linear-gradient(90deg, #38bdf8 0%, #34d399 100%)',
     borderRadius: '8px',
     transition: 'width 0.3s',
   },
   progressPercent: {
     fontSize: '0.9rem',
-    color: '#888',
+    color: '#059669',
   },
   timeWrap: {
     fontSize: '1rem',
-    color: '#0055ff',
+    color: '#38bdf8',
     fontWeight: 'bold',
   },
   statLive: {
-    background: '#f5f7fa',
+    background: '#e0f7fa',
     borderRadius: '12px',
-    boxShadow: '0 0 8px #e0e7ef',
+    boxShadow: '0 0 8px #b2f5ea',
     padding: '0.8rem 1.2rem',
     fontSize: '0.95rem',
     color: '#222',
@@ -223,7 +250,7 @@ const styles = {
   question: {
     fontSize: '1.3rem',
     marginBottom: '1.2rem',
-    color: '#222',
+    color: '#059669',
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -235,14 +262,14 @@ const styles = {
   },
   button: {
     padding: '1rem',
-    background: '#f5f7fa',
-    color: '#0055ff',
-    border: '2px solid #e0e7ef',
+    background: '#e0f7fa',
+    color: '#059669',
+    border: '2px solid #b2f5ea',
     borderRadius: '10px',
     cursor: 'pointer',
     fontSize: '1.1rem',
     fontWeight: 'bold',
-    boxShadow: '0 0 8px #e0e7ef',
+    boxShadow: '0 0 8px #b2f5ea',
     marginBottom: '0.2rem',
     transition: 'background 0.2s, color 0.2s',
     textAlign: 'left',
@@ -251,8 +278,8 @@ const styles = {
     marginTop: '1.2rem',
     fontSize: '1.1rem',
     fontWeight: 'bold',
-    color: '#00cfff',
-    textShadow: '0 0 6px #c3cfe2',
+    color: '#38bdf8',
+    textShadow: '0 0 6px #b2f5ea',
   },
   actionRow: {
     display: 'flex',
@@ -262,7 +289,7 @@ const styles = {
     marginTop: '1.2rem',
   },
   navButton: {
-    background: 'linear-gradient(90deg, #0055ff 0%, #00cfff 100%)',
+    background: 'linear-gradient(90deg, #38bdf8 0%, #34d399 100%)',
     color: '#fff',
     border: 'none',
     borderRadius: '8px',
@@ -270,19 +297,19 @@ const styles = {
     fontWeight: 'bold',
     fontSize: '1rem',
     cursor: 'pointer',
-    boxShadow: '0 0 8px #00cfff99',
+    boxShadow: '0 0 8px #34d39999',
     transition: 'background 0.2s',
   },
   flagButton: {
-    background: '#fffbe6',
-    color: '#d97706',
-    border: '2px solid #facc15',
+    background: '#f0fff4',
+    color: '#059669',
+    border: '2px solid #34d399',
     borderRadius: '8px',
     padding: '0.7rem 1.2rem',
     fontWeight: 'bold',
     fontSize: '1rem',
     cursor: 'pointer',
-    boxShadow: '0 0 8px #facc1599',
+    boxShadow: '0 0 8px #34d39999',
     transition: 'background 0.2s',
   },
   modalOverlay: {
@@ -291,18 +318,18 @@ const styles = {
     left: 0,
     width: '100vw',
     height: '100vh',
-    background: 'rgba(195, 207, 226, 0.85)',
+    background: 'rgba(209, 250, 229, 0.85)',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 999,
   },
   modalBox: {
-    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-    color: '#0055ff',
+    background: 'linear-gradient(135deg, #e0f7fa 0%, #d1fae5 100%)',
+    color: '#059669',
     padding: '2.5rem 2rem',
     borderRadius: '18px',
-    boxShadow: '0 0 40px #c3cfe2',
+    boxShadow: '0 0 40px #b2f5ea',
     textAlign: 'center',
     minWidth: '320px',
   },
