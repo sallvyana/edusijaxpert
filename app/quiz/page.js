@@ -1,10 +1,11 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { quizData } from './quizData';
+import { Suspense } from 'react';
 
-export default function QuizPage() {
+function QuizContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const kategori = searchParams.get('kategori') || 'iot';
@@ -64,6 +65,14 @@ export default function QuizPage() {
         </>
       )}
     </main>
+  );
+}
+
+export default function QuizPage() {
+  return (
+    <Suspense>
+      <QuizContent />
+    </Suspense>
   );
 }
 
