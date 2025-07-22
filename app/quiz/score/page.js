@@ -1,8 +1,10 @@
 // Halaman skor akhir quiz
 'use client';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import Image from 'next/image';
 
-export default function QuizScorePage() {
+function ScoreContent() {
   const searchParams = useSearchParams();
   const kategori = searchParams.get('kategori') || '';
   const score = searchParams.get('score') || 0;
@@ -20,12 +22,20 @@ export default function QuizScorePage() {
 
   return (
     <main style={styles.container}>
-      <img src={logoSrc} alt={kategori} style={styles.logo} />
+      <Image src={logoSrc} alt={kategori} width={80} height={80} style={styles.logo} />
       <h1 style={styles.title}>Hasil Kuis</h1>
       <p style={styles.kategori}>Kategori: <b>{kategori.toUpperCase()}</b></p>
       <p style={styles.skor}>Skor Anda: <span style={styles.score}>{score} / {total}</span></p>
       <button style={styles.button} onClick={() => router.push('/')}>Kembali ke Beranda</button>
     </main>
+  );
+}
+
+export default function QuizScorePage() {
+  return (
+    <Suspense>
+      <ScoreContent />
+    </Suspense>
   );
 }
 
