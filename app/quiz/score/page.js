@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import Image from 'next/image';
-import quizData from '../quizData';
+import { quizData } from '../quizData';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://dyzokpqblmyzstvthnhu.supabase.co';
