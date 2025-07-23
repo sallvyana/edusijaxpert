@@ -1,5 +1,5 @@
 'use client';
-import Leaderboard from '../../components/Leaderboard';
+import Leaderboard from '@/app/components/Leaderboard';
 
 export default function ScorePage() {
   return (
